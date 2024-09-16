@@ -1,0 +1,218 @@
+﻿<style type="text/css">
+    .card{
+        width:60%;
+        margin-left:20%;
+        margin-top:5%;
+    }
+    @{
+        var process = @ViewData["editid"].ToString()!="0"?"Edit":"Create";
+    }
+</style>
+<div class="card">
+    <div class="card-header">
+        <h2 id="header">@process Employee</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Id</label>
+                    <input disabled="disabled" hidden="hidden" value="@ViewData["editid"]" class="form-control" id="txtid" />
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input class="form-control" id="txtfname" />
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input class="form-control" id="txtlname" />
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Date of birth</label>
+                    <input class="form-control" type="date" id="txtdob" />
+                </div>
+            </div>
+         
+        </div>
+    </div>
+    <div class="card-footer">
+        <a onclick="SaveEmployee()" class="btn btn-primary">Save</a>
+        <a onclick="Cancel()" class="btn btn-danger">Cancel</a>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript">
+    var employeeId = '';
+    var isproceed = true;
+    var create = true;
+    var header = $('#header').val();
+    $(document).ready(function () {
+             employeeId = $('#txtid').val();
+            if (employeeId != '' && employeeId != null) {
+                create = false;
+                $.ajax({
+                    type: 'GET',
+                    url: 'https://localhost:7000/api/Employees/' + employeeId,
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    async: false,
+                    success: function (data, res, stat) {
+
+                    if (stat.status == 200) {
+                        if (data != null) {
+                            $('#txtfname').val(data.firstName);
+                            $('#txtlname').val(data.lastName);
+                            var date = FormatDate(data.dateOfBirth);
+                            $('#txtdob').val(date);
+                         }
+                         else{
+                            alert('No data');
+                         }
+                    }
+                    else if (stat.status == 404) {
+                        alert('Employee not found.');
+                    }else if (stat.status == 500) {
+                        alert('Internal Server Error');
+                    }
+                    else {
+                        alert('bad request');
+                    }
+
+
+                      
+                    },
+                    failure: function (error) {
+                        alert('err');
+                    }
+                })
+            }
+        })
+   
+      function FormatDate(date) {
+        date = new Date(date);
+
+        var day = ('0' + date.getDate()).slice(-2);
+        var month = ('0' + (date.getMonth() + 1)).slice(-2);
+        var year = date.getFullYear();
+
+        return year + '-' + month + '-' + day;
+      }
+
+    function SaveEmployee() {
+       
+        Validate();
+       
+        var _obj = new Object();
+        _obj.FirstName = $('#txtfname').val();
+        _obj.LastName = $('#txtlname').val();
+        _obj.DateOfBirth = $('#txtdob').val();
+             
+        if (isproceed) {
+            if (employeeId != '0') {
+                UpdateEmployee(_obj);
+            } else {
+                CreateEmployee(_obj);
+            }
+        }
+       
+    }
+
+    function UpdateEmployee(obj) {
+     
+      
+            $.ajax({
+                type: 'PUT',
+                url: 'https://localhost:7000/api/Employees/' + employeeId,
+                data: JSON.stringify(obj),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (data, res, stat) {
+                    if (stat.status == 200) {
+                        window.location.href = '/Employee';
+                        alert('Saved Successfully.');
+                    }
+                    else if (stat.status == 404) {
+                        alert('Employee not found.');
+                    }else if (stat.status == 500) {
+                        alert('Internal Server Error');
+                    }
+                    else {
+                        alert('Failed to save');
+                    }
+
+                },
+                error: function (error) {
+                    alert('Failed to save');
+                }
+            })
+    }
+
+    function CreateEmployee(obj) {
+
+
+            $.ajax({
+                type: 'POST',
+                url: 'https://localhost:7000/api/Employees',
+                data: JSON.stringify(obj),
+               contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (data, res, stat) {
+                    if (stat.status == 201) {
+                        window.location.href = '/Employee';
+                        alert('Saved Successfully.');
+                    }
+                    else if (stat.status == 400) {
+                        alert('Bad Request.');
+                    }
+                    else if (stat.status == 500) {
+                        alert('Internal Server Error');
+                    }
+                    else {
+                        alert('Failed to save');
+                    }
+
+                },
+                error: function (error) {
+                    alert('Failed to save');
+                }
+            })
+    }
+    function Cancel(){
+         window.location.href = '/Employee';
+    }
+
+    function Validate() {
+        isproceed = true;
+        var _firstName = $('#txtfname').val();
+        var _lastName = $('#txtlname').val();
+        var _dateOfBirth = $('#txtdob').val();
+
+        if (_firstName == null | _firstName == '') {
+            $('#txtfname').css('border-color', 'red');
+            isproceed = false
+        } else {
+            $('#txtfname').css('border-color', '#ccc');
+        }
+
+        if (_lastName == null | _lastName == '') {
+            $('#txtlname').css('border-color', 'red');
+            isproceed = false
+        } else {
+            $('#txtlname').css('border-color', '#ccc');
+        }
+        if (_dateOfBirth == null | _dateOfBirth == '') {
+            $('#txtdob').css('border-color', 'red');
+            isproceed = false
+        } else {
+            $('#txtdob').css('border-color', '#ccc');
+        }
+        return isproceed;
+    }
+</script>

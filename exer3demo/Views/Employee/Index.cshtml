@@ -1,0 +1,101 @@
+﻿@model Employee;
+
+@{
+    ViewData["TItle"] = "Employee List(Exercise3)";
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<hr />
+<div>
+    <a class="btn btn-primary mb-3" asp-controller="Employee" asp-action="CreateEdit">Add Employee</a>
+</div>
+
+<div class="container">
+    <table class="table  table-striped table-responsive table-hover">
+        <thead>
+            <tr>
+                <th hidden="hidden">Id</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Date of birth</th>
+            </tr>
+        </thead>
+        <tbody id="tblBody">
+        </tbody>
+        
+    </table>
+</div>
+<div>
+    <a onclick="Refresh()" class="btn btn-secondary">Refresh</a>
+</div>
+
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript">
+
+    var js = jQuery.noConflict(true);
+    js(document).ready(function () {
+
+        LoadCustomer();
+    });
+    js(function(){
+      var employeeId = '';
+        $('table tr').dblclick(function(){
+            var data= $(this).children("td").map(function(){
+                  return $(this).text();
+                }).get();
+            employeeId = data[0];
+        
+             Edit(employeeId);
+        });
+       
+    })
+
+    function Refresh(){
+         $("tbody").children().remove()
+         LoadCustomer();
+    }
+
+    function LoadCustomer() {
+        $.ajax({
+            type:'GET',
+            url:'https://localhost:7000/api/Employees',
+            contentType:'application/json; charset=utf-8',
+            dataType:'json',
+            async:false,
+            success: function (data) {
+
+                $.each(data,function(key,value){
+                    $('tbody').append(`<tr>
+                    <td  hidden="hidden" >${value.id} </td>
+                    <td>${value.firstName} </td>
+                     <td>${value.lastName} </td>
+                     <td>${FormatDate(value.dateOfBirth)} </td>
+                     </tr>`)
+
+                })
+            },
+            error:function(err){
+                   alert('test');
+            }
+        })
+
+    }
+
+      function FormatDate(date) {
+      date = new Date(date);
+
+      var day = ('0' + date.getDate()).slice(-2);
+      var month = ('0' + (date.getMonth() + 1)).slice(-2);
+      var year = date.getFullYear();
+
+      return year + '-' + month + '-' + day;
+     // return month + '/' + day + '/' + year;
+    }
+        function Edit(employeeId) {
+        var id = employeeId;
+        window.location.href = '/Employee/CreateEdit?id=' + id;
+    }
+
+</script>
